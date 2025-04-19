@@ -53,8 +53,8 @@ systemctl enable docker &>> "$LOGFILE"
 VALIDATE $? "Enabling Docker"
 
 # 7. Verify Docker is installed and running
-docker --version &>>
-VALIDATE $? "Enabling Docker" "$LOGFILE"
+echo "Verifying Docker version..." | tee -a "$LOGFILE"
+docker --version
 
 # 8. Run hello-world test container
 docker run hello-world &>> "$LOGFILE"
