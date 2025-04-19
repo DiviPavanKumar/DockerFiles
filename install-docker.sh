@@ -1,3 +1,5 @@
+#!/bin/bash
+
 date_var=$(date +%F-%H-%M-%S)
 SCRIPT_NAME=$(basename "$0")
 LOGFILE="/tmp/${SCRIPT_NAME}-${date_var}.log"
@@ -10,77 +12,64 @@ N="\e[0m"   # Reset color
 
 # Check if the script is run as root
 if [ "$(id -u)" -ne 0 ]; then
-    echo -e "${R}Error: Please run this script with sudo access.${N}"
+    echo -e "${R}Error: Please run this script with sudo or as root.${N}"
     exit 1
 fi
 
 # Validation function
 VALIDATE() {
-    if [ $? -ne 0 ]; then
-        echo -e "$2 ..... ${R}Failed${N}"
+    if [ $1 -ne 0 ]; then
+        echo -e "$2 ..... ${R}Failed${N}" | tee -a "$LOGFILE"
         exit 1
     else
-        echo -e "$2 ...... ${G}Successful${N}"
+        echo -e "$2 ..... ${G}Successful${N}" | tee -a "$LOGFILE"
     fi
 }
 
-echo "Starting Docker installation at $(date)" &>> $LOGFILE
+echo "Starting Docker installation at $(date)" | tee -a "$LOGFILE"
 
 # 1. Update existing packages
-echo "Updating packages..."
-sudo yum update -y &>> $LOGFILE
+echo "Updating packages..." | tee -a "$LOGFILE"
+yum update -y &>> "$LOGFILE"
 VALIDATE $? "Updating packages"
 
 # 2. Install required packages
-echo "Installing required packages..."
-sudo yum install -y yum-utils device-mapper-persistent-data lvm2 &>> $LOGFILE
+echo "Installing required packages..." | tee -a "$LOGFILE"
+yum install -y yum-utils device-mapper-persistent-data lvm2 &>> "$LOGFILE"
 VALIDATE $? "Installing required packages"
 
 # 3. Add Docker repository
-echo "Adding Docker repo..."
-sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo &>> $LOGFILE
+echo "Adding Docker repo..." | tee -a "$LOGFILE"
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo &>> "$LOGFILE"
 VALIDATE $? "Adding Docker repo"
 
-
 # 4. Install Docker Engine
-echo "Installing Docker..."
-sudo yum install -y docker-ce docker-ce-cli containerd.io &>> $LOGFILE
+echo "Installing Docker..." | tee -a "$LOGFILE"
+yum install -y docker-ce docker-ce-cli containerd.io &>> "$LOGFILE"
 VALIDATE $? "Installing Docker"
 
 # 5. Start Docker service
-echo "Starting Docker..."
-sudo systemctl start docker &>> $LOGFILE
+echo "Starting Docker..." | tee -a "$LOGFILE"
+systemctl start docker &>> "$LOGFILE"
 VALIDATE $? "Starting Docker"
 
 # 6. Enable Docker to start on boot
-echo "Enabling Docker on boot..."
-sudo systemctl enable docker &>> $LOGFILE
+echo "Enabling Docker on boot..." | tee -a "$LOGFILE"
+systemctl enable docker &>> "$LOGFILE"
 VALIDATE $? "Enabling Docker"
 
 # 7. Verify Docker is installed and running
-echo "Verifying Docker version..." 
-docker --version &>> $LOGFILE
+echo "Verifying Docker version..." | tee -a "$LOGFILE"
+docker --version &>> "$LOGFILE"
 
-echo "Running hello-world container..."
-sudo docker run hello-world &>> $LOGFILE
+# 8. Run hello-world test container
+echo "Running hello-world container..." | tee -a "$LOGFILE"
+docker run hello-world &>> "$LOGFILE"
 VALIDATE $? "Running hello-world container"
 
-
-# Optional: Add user to docker group
-echo "Adding user to docker group..."
-sudo usermod -aG docker $USER &>> $LOGFILE
+# 9. Add user to docker group
+echo "Adding user to docker group..." | tee -a "$LOGFILE"
+usermod -aG docker $USER &>> "$LOGFILE"
 VALIDATE $? "Adding user to docker group"
 
-# Final success check
-if [ $? -eq 0 ]; then
-    echo "Docker installation completed successfully at $(date)" &>> $LOGFILE
-    VALIDATE $? "Docker installation completed successfully"
-else
-    echo "Docker installation failed at $(date)" &>> $LOGFILE
-    VALIDATE $? "Docker installation failed"
-else
-fi
-
-#sudo sh install-docker.sh
-#cat /var/log/docker-install.log
-
+echo -e "${G}Docker installation completed successfully at $(date)${N}" | tee -a "$LOGFILE"
