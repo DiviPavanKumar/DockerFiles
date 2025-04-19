@@ -1,4 +1,4 @@
-FROM nginx:alpine
+FROM nginx
 
 # Install coreutils to get the 'chmod' command
 RUN apk add --no-cache coreutils
@@ -16,4 +16,4 @@ RUN chmod -R 755 /usr/share/nginx/html/
 EXPOSE 80
 
 # Run Nginx in the foreground
-CMD ["nginx", "-g", "daemon off;"]
+#CMD ["nginx", "-g", "daemon off;"]
